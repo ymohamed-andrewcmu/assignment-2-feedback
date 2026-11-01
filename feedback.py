@@ -21,7 +21,7 @@ LABELS = {
 }
 ACTION_LABELS = list(LABELS)[:5]
 REVIEW_LABEL = "Manual review"
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "openai/gpt-oss-20b"
 REVIEW_THRESHOLD = 0.75
 PROMPT_VERSION = "campus-cup-v1"
 MAX_COMMENT_LENGTH = 3000
@@ -96,10 +96,11 @@ def classify_comment(comment: str, api_key: str = "", model: str = DEFAULT_MODEL
             from groq import Groq
             client = Groq(api_key=api_key, timeout=20.0, max_retries=1)
         response = client.chat.completions.create(
-            model=model, temperature=0, max_completion_tokens=250,
+            model=model, temperature=0, max_completion_tokens=1024,
             response_format={"type": "json_object"},
             messages=[{"role": "system", "content": SYSTEM_PROMPT},
                       {"role": "user", "content": comment}],
+            **({"reasoning_effort": "low"} if model.startswith("openai/gpt-oss-") else {}),
         )
         return parse_classification(response.choices[0].message.content, model)
     except (ValueError, TypeError, AttributeError, IndexError, KeyError):

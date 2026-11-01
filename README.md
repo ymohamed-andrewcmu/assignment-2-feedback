@@ -48,7 +48,7 @@ streamlit run app.py
 
 ```toml
 GROQ_API_KEY = "YOUR_GROQ_API_KEY"
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "openai/gpt-oss-20b"
 ```
 
 3. Save and deploy. Obtain a free key at https://console.groq.com/keys.
