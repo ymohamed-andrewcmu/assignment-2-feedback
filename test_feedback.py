@@ -43,6 +43,16 @@ def test_failure_and_missing_key_are_saved_for_review():
     assert failure.label == REVIEW_LABEL and "secret" not in failure.reason
 
 
+@pytest.mark.parametrize("status", [400, 401, 403, 404, 429])
+def test_provider_status_is_reported_without_private_error_text(status):
+    class ProviderError(Exception):
+        status_code = status
+    failure = classify_comment("slow", client=fake_client(error=ProviderError("secret-should-not-leak")))
+    assert failure.label == REVIEW_LABEL
+    assert f"HTTP {status}" in failure.reason
+    assert "secret-should-not-leak" not in failure.reason
+
+
 def test_validation_persistence_and_idempotency(tmp_path):
     db = tmp_path / "feedback.sqlite3"
     c = Classification("Speed", 0.9, "Slow pickup", "llm")

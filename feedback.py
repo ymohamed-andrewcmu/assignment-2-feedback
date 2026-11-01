@@ -104,8 +104,18 @@ def classify_comment(comment: str, api_key: str = "", model: str = DEFAULT_MODEL
         return parse_classification(response.choices[0].message.content, model)
     except (ValueError, TypeError, AttributeError, IndexError, KeyError):
         return pending("The AI response could not be validated; manual review is required.", model)
-    except Exception:
+    except Exception as error:
         # Never persist provider exception text: it can contain request or credential details.
+        status = getattr(error, "status_code", None)
+        explanations = {
+            400: "Groq rejected the model or request settings (HTTP 400); an owner must check the model configuration.",
+            401: "Groq rejected the API key (HTTP 401); an owner must check Streamlit Secrets.",
+            403: "Groq denied access (HTTP 403); an owner must check project and model access.",
+            404: "The configured Groq model was not found (HTTP 404); an owner must check the model name.",
+            429: "Groq's rate limit was reached (HTTP 429); retry AI labeling later.",
+        }
+        if status in explanations:
+            return pending(explanations[status] + " This comment was saved for manual review.", model)
         return pending("The AI service was unavailable; this comment was saved for manual review.", model)
 
 
